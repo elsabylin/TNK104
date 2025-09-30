@@ -1,0 +1,86 @@
+clc;
+clear;
+
+% reading input data
+input = fopen("own_data_assignment2.txt");
+n = fscanf(input,'%d',1);
+input_data = fscanf(input,'%d %d %d %d',[4,n])';
+
+% intialize empty arrays to store edges and weights
+edge_list = [];
+edge_weights = [];
+
+% contructing shortest path graph (task b)
+for i = 0:n-1
+    for j = i+1:n
+        edge_list = [edge_list; i,j]; % add an edge from i to j
+
+        f = input_data(i+1,2); % fixed cost
+        p = input_data(i+1,3); % unit cost per production
+        c = p + sum(input_data(i+1:end,4)); % cost
+        d = input_data(i+1:j,1); % demand
+
+        cost = f + c * sum(d); % total cost to produce 
+        edge_weights = [edge_weights; cost];
+    end
+end
+
+% plot the network
+G = digraph(edge_list(:,1)+1, edge_list(:,2)+1, edge_weights);
+figure;
+plot(G, 'EdgeLabel', G.Edges.Weight);
+title('Lot-sizing network');
+
+% solving the lot-size problem (taken from lab2)
+V = n+1; % number of nodes
+E = length(edge_weights); % number of edges
+S = 1; % starting vertice
+
+% declaring an empty vector for predecessor
+pred = zeros(V, 1);
+
+% set every entry to infinity
+D = ones(V, 1).*Inf;
+
+% start vertice is 0
+D(S) = 0;
+
+% this loop relaxes all the edges V-1 times
+for i = 1:V-1
+    for j = 1:E
+        if D(edge_list(j,1)+1) + edge_weights(j) < D(edge_list(j,2)+1) % if current vertice cost
+            % plus the edge weight is less than next vertice cost
+            D(edge_list(j,2)+1) = D(edge_list(j,1)+1) + edge_weights(j); % update next vertice cost
+            pred(edge_list(j,2)+1) = edge_list(j,1)+1; % set predecessor 
+        end
+    end
+end
+
+% need to "back-track" the path to reconstruct it
+path = [];
+current_node = n+1;
+
+while current_node ~= 0 && current_node ~= S
+    path = [current_node path];
+    current_node = pred(current_node);
+end
+
+path = [S path]; % will be the best sequence of production
+
+% extracting production amounts
+production = [];
+
+for k = 1:length(path)-1
+    start = path(k);
+    enD = path(k+1)-1;
+    production = [production sum(input_data(start:enD,1))];
+end
+
+% displaying results
+disp('Time periods when production was made');
+disp(path-1); % minus 1 to match 0 based time periods
+disp('Amount of production for these periods');
+disp(production);
+disp('Total cost');
+disp(D(n+1));
+
