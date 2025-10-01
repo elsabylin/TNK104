@@ -1,0 +1,50 @@
+clc;
+clear;
+
+% reading input data
+input = fopen("assignment4_data2.txt");
+
+% extracting the necessary variables
+m = fscanf(input,'%d',1);
+n = fscanf(input,'%d %d',1);
+cost = fscanf(input,'%d',[n m])';
+capacity_req = fscanf(input,'%d',[n m])';
+capacity = fscanf(input,'%d',m)';
+
+values = 1:m;
+results = inf;
+index = 0;
+
+% generate all 3^5 combinations in matrix
+[c1,c2,c3,c4,c5] = ndgrid(values, values, values, values, values);
+comb_matrix = [c1(:),c2(:),c3(:),c4(:),c5(:)];
+
+for i = 1:length(comb_matrix) % loops over all combinations
+    solution = comb_matrix(i,:);
+    capacity_test = capacity; % reset capacity for new combination
+    temp_res = 0;
+
+    for j = 1:length(solution) % loops over all jobs in the combination
+        machine = solution(j);
+        capacity_test(machine) = capacity_test(machine) - capacity_req(machine,j); % deducts capacity
+        temp_res = temp_res + cost(machine,j); % adds to cost
+    end
+
+    % if the capacity of some machine is negative = capacity is maxed ->
+    % skip to next combination
+    if any(capacity_test < 0)
+        temp_res = 0;
+        continue; % next combination
+    end
+    
+    % if the new cost is better (smaller) than the one we have -> update
+    if temp_res < results
+        results = temp_res;
+        index = i;
+    end
+end
+
+% display results 
+disp('Total cost ');
+disp(results);
+
