@@ -1,0 +1,44 @@
+clc;
+clear;
+
+% reading input data
+input = fopen("assignment4_data2.txt");
+
+% extracting the necessary variables
+m = fscanf(input,'%d',1);
+n = fscanf(input,'%d %d',1);
+cost = fscanf(input,'%d',[n m])';
+capacity_req = fscanf(input,'%d',[n m])';
+capacity = fscanf(input,'%d',m)';
+
+% intiating 
+job = zeros(1,n);
+total_cost = 0;
+
+for j = 1:n
+    % check so the machine have enough capacity for the job
+    machine = find(capacity_req(:,j) <= capacity');
+    
+    % display if this happens
+    if isempty(machine)
+        disp("Max capacity for this machine is taken")
+    end
+
+    % among the machines with enough capacity, take the one with least cost
+    [~,idx] = min(cost(machine,j));
+    machine_chosen = machine(idx);
+
+    % give this job to the chosen machine
+    job(j) = machine_chosen;
+    total_cost = total_cost + cost(machine_chosen,j);
+
+    % update capacity of machine
+    capacity(machine_chosen) = capacity(machine_chosen) - capacity_req(machine_chosen,j);
+end
+
+% display results
+disp('Job assignments');
+disp(job);
+disp('Total cost ');
+disp(total_cost);
+
