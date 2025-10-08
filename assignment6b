@@ -1,0 +1,12 @@
+clc;
+clear;
+
+% reading input data
+input = fopen("assignment6_data.txt");
+
+% extracting data
+I = fscanf(input,'%d',1);
+J = fscanf(input,'%d',1);
+f_coordinates = fscanf(input,'%d %d',[2 I])';
+c_coordinates = fscanf(input,'%d %d',[2 J])';
+f_i = fscanf(input,'%d',[1 I]);
