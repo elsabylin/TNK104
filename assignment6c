@@ -1,0 +1,73 @@
+clc;
+clear;
+
+% reading input data
+input = fopen("assignment6_data.txt");
+
+% extracting data
+I = fscanf(input,'%d',1);
+J = fscanf(input,'%d',1);
+f_coordinates = fscanf(input,'%d %d',[2 I])';
+c_coordinates = fscanf(input,'%d %d',[2 J])';
+f_cost = fscanf(input,'%d',[1 I])';
+
+% step 1: determain max iterations and set k=0
+max_iter = 10;
+k = 0;
+
+c = pdist2(f_coordinates, c_coordinates); % create a transportation cost matrix
+lagrange_max = 0;
+
+% step 2: initialize lambda 
+lambda = zeros(I,J);
+
+for l = 1:max_iter
+    % step 3: solve relaxation 
+    [~,best_f] = min(c + lambda,[],1);
+    x = zeros(I,J);
+    
+    % each customer gets a faciclity with min(c + lambda)
+    for j = 1:J
+        x(best_f(j),j) = 1; 
+    end
+    
+    % open facility i if opening cost + lambda < 0
+    y = zeros(I,1);
+    for i = 1:I
+        if f_cost(i) - sum(lambda(i,:)) < 0
+            y(i) = 1;
+        end
+    end
+    
+    % calculate langrangian value
+    langrange_value = sum((f_cost - sum(lambda,2)).*y) + sum(sum((c + lambda).*x));
+
+    if l == 1
+        lagrange_max = langrange_value;
+    else
+        lagrange_max = max(lagrange_max,langrange_value);
+    end
+    
+    % step 4: calculate subgradient
+    gamma = x-y;
+    
+    % step 5: stop criterium
+    if k > max_iter
+        quit;
+    end
+    
+    % step 6: calculate step size
+    s = 1; % choose a s between 0 and 2
+    ub = 2213;
+    t = s*((ub-langrange_value)/norm(gamma(:))^2);
+    
+    % step 7: update lagrangian value (only for non-negative values)
+    lambda = max(0,lambda + t*gamma);
+    
+    % step 8: update k
+    k = k+1;
+end
+
+% display results
+disp('Highest lagrangean value')
+disp(lagrange_max);
